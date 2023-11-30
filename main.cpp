@@ -22,6 +22,7 @@ int main(int argc, char **argv){
         uint32_t send_ip;
 	uint64_t send_session_id;
 	uint32_t send_mpid;
+	uint8_t plus_seq = 0x100;		
 
 	int pktCnt = 0;
 	while(true) {
@@ -40,9 +41,10 @@ int main(int argc, char **argv){
 			send_session_id = rxpkt -> openvpnudphdr->sessionid_;
 			continue;
 		}
-		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1){
+		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1 || rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_ACK_V1){
 			if(rxpkt->iphdr->src_ == send_ip){
-				send_mpid = rxpkt -> openvpnudphdr->mpid() + 0x100;
+				send_mpid = rxpkt -> openvpnudphdr->mpid() + plus_seq;
+				plus_seq += 0x100;
 			}
 			continue;
 		}
