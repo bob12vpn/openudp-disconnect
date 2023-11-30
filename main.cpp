@@ -27,6 +27,7 @@ int main(int argc, char **argv){
 	while(true) {
                 res = pcap_next_ex(pcap, &header, &packet);
 		pktCnt++;
+		printf("pktcnt = %d\n", pktCnt);
 		rxpkt->clear();
                 rxpkt -> ethhdr = (struct EthHdr* )(packet);
 		if(rxpkt->ethhdr->type() != EthHdr::ipv4) continue;
@@ -41,7 +42,7 @@ int main(int argc, char **argv){
 		}
 		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1){
 			if(rxpkt->iphdr->src_ == send_ip){
-				send_mpid = rxpkt -> openvpnudphdr->mpid_ + 1;
+				send_mpid = rxpkt -> openvpnudphdr->mpid() + 0x100;
 			}
 			continue;
 		}
@@ -63,7 +64,7 @@ int main(int argc, char **argv){
                 txpkt->openvpnudphdr.type_ = OpenVpnUdpHdr::P_CONTROL_V1;
 		txpkt->openvpnudphdr.sessionid_ = send_session_id;
                 txpkt->openvpnudphdr.mpidarraylength_ = 0;
-		txpkt->openvpnudphdr.mpid_ = send_mpid;
+		txpkt->openvpnudphdr.mpid_ = ntohl(send_mpid);
 		printf("mpid = %u to %d\n ", rxpkt->openvpnudphdr->mpid(), send_mpid);
 		//printf("%d",send_mpid);
 
