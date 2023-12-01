@@ -62,7 +62,6 @@ int main(int argc, char **argv){
                 txpkt->iphdr.hdrLen_ = 5;
 		txpkt->iphdr.checksum_ = IpHdr::calcIpChecksum(&(txpkt->iphdr));
                 memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
-		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
                 memcpy(&(txpkt->openvpnudphdr), rxpkt->openvpnudphdr, rxpkt->udphdr->payloadLen());
                 //txpkt->iphdr.src_ = send_ip;
                 txpkt->openvpnudphdr.type_ = OpenVpnUdpHdr::P_CONTROL_V1;
@@ -81,7 +80,8 @@ int main(int argc, char **argv){
 			usleep(100000);
 			}
 		*/
-		
+		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
+		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
 	  res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(txpkt), 14+20+8+txpkt->udphdr.payloadLen());
           if(res !=0){
                   printf("%s",errbuf);
