@@ -44,7 +44,8 @@ int main(int argc, char **argv){
 		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1 || rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_ACK_V1){
 			if(rxpkt->iphdr->src_ == send_ip){
 				send_mpid = rxpkt -> openvpnudphdr->mpid() + plus_seq;
-				plus_seq += 0x100;
+				plus_seq += 0x200;
+				printf("send mpid = %u\n",send_mpid);
 			}
 			continue;
 		}
@@ -52,8 +53,7 @@ int main(int argc, char **argv){
 			printf("not detect data_v2\n");
 			continue;
 		}
-		//printf("this is DATA_V2\n");	
-		
+		//printf("this is DATA_V2\n");		
 		memcpy(&(txpkt->ethhdr), rxpkt->ethhdr, ETH_SIZE);
                 memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
                 txpkt->iphdr.id_ = 0x4444;
@@ -67,8 +67,10 @@ int main(int argc, char **argv){
 		txpkt->openvpnudphdr.sessionid_ = send_session_id;
                 txpkt->openvpnudphdr.mpidarraylength_ = 0;
 		txpkt->openvpnudphdr.mpid_ = ntohl(send_mpid);
-		printf("mpid = %u to %d\n ", rxpkt->openvpnudphdr->mpid(), send_mpid);
-		//printf("%d",send_mpid);
+
+		send_mpid += 0x100;
+		//printf("mpid = %u to %d\n ", rxpkt->openvpnudphdr->mpid(), send_mpid);
+		//printf("%u",send_mpid);
 
 		/*
 		for(int ix=0;ix<1000;ix++){
