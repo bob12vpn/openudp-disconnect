@@ -44,7 +44,7 @@ int main(int argc, char **argv){
 		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1 || rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_ACK_V1){
 			if(rxpkt->iphdr->src_ == send_ip){
 				printf("plus seq : %u\n",plus_seq);
-				send_mpid = rxpkt -> openvpnudphdr->mpid() + plus_seq;
+				send_mpid = rxpkt -> openvpnudphdr->mpid() + 0x100;
 				
 				printf("contorl or ack\n");	
 				printf("send mpid = %u\n",send_mpid);
