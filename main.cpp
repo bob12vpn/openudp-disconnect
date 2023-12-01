@@ -22,7 +22,7 @@ int main(int argc, char **argv){
         uint32_t send_ip;
 	uint64_t send_session_id;
 	uint32_t send_mpid;
-	uint8_t plus_seq = 0x100;		
+	uint16_t plus_seq = 0x100;		
 
 	int pktCnt = 0;
 	while(true) {
@@ -43,8 +43,10 @@ int main(int argc, char **argv){
 		}
 		if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_V1 || rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_ACK_V1){
 			if(rxpkt->iphdr->src_ == send_ip){
+				printf("plus seq : %u\n",plus_seq);
 				send_mpid = rxpkt -> openvpnudphdr->mpid() + plus_seq;
-				plus_seq += 0x200;
+				
+				printf("contorl or ack\n");	
 				printf("send mpid = %u\n",send_mpid);
 			}
 			continue;
