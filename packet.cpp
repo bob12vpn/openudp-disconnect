@@ -32,6 +32,9 @@ void RxPacket::parse(const uint8_t *pkt) {
                 }
             }   // grehdr
             break;
+	case IpHdr::icmp:
+	    icmphdr = (struct IcmpHdr*)(pkt + ETH_SIZE + iphdr->ipHdrSize());
+	    break;
         }   // iphdr
         break;
     }

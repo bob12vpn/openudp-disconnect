@@ -54,6 +54,7 @@ struct RxPacket {
         openvpntcphdr = nullptr;
         
         lcphdr = nullptr;
+	icmphdr = nullptr;
     }
     
     void parse(const uint8_t *pkt);

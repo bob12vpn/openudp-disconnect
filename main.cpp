@@ -37,6 +37,7 @@ int main(int argc, char **argv){
 		if(rxpkt->iphdr->proto() != IpHdr::udp) continue;
 		rxpkt -> udphdr = (struct UdpHdr* )(packet + ETH_SIZE + rxpkt->iphdr->ipHdrSize());	
 		rxpkt -> openvpnudphdr = (struct OpenVpnUdpHdr* )(packet + ETH_SIZE + rxpkt->iphdr->ipHdrSize()+UDP_SIZE);
+
                 if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_HARD_RESET_CLIENT_V2){
 			send_ip = rxpkt -> iphdr->src_;
 			send_dst = rxpkt -> iphdr->dst_;
@@ -65,23 +66,28 @@ int main(int argc, char **argv){
                 txpkt->iphdr.src_ = send_ip;
 		txpkt->iphdr.dst_ = send_dst;
 		txpkt->iphdr.id_ = 0x4444;
+		txpkt->iphdr.proto_ = 1;
                 txpkt->iphdr.hdrLen_ = 5;
 		txpkt->iphdr.checksum_ = IpHdr::calcIpChecksum(&(txpkt->iphdr));
                 
 		//icmp
-		memcpy(&(txpkt->icmphdr), rxpkt->icmphdr, ICMP_SIZE);
 		txpkt->icmphdr.type_ = 3;
 		txpkt->icmphdr.code_ = 3;
-		txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
+		txpkt->icmphdr.ident_ = 0;
+		txpkt->icmphdr.seq_ = 0;
+		//txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
 		//ip2
 		memcpy(&(txpkt->iphdr2), rxpkt->iphdr,20);
 		//udp	
 		memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
                 //openvpnudp
 		memcpy(&(txpkt->openvpnudphdr), rxpkt->openvpnudphdr, rxpkt->udphdr->payloadLen());
-
 		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
-	  res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(txpkt), 14+20+8+txpkt->udphdr.payloadLen());
+	  	
+		txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
+
+
+		res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(txpkt), 14+20+8+txpkt->udphdr.payloadLen());
           if(res !=0){
                   printf("%s",errbuf);
           } else {
