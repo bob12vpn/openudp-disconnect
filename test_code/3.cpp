@@ -20,7 +20,6 @@ int main(int argc, char **argv){
 	const uint8_t* packet;
 	struct pcap_pkthdr *header;
         uint32_t send_ip;
-	uint32_t send_dst;
 	uint64_t send_session_id;
 	uint32_t send_mpid;
 	uint16_t plus_seq = 0x100;		
@@ -39,7 +38,6 @@ int main(int argc, char **argv){
 		rxpkt -> openvpnudphdr = (struct OpenVpnUdpHdr* )(packet + ETH_SIZE + rxpkt->iphdr->ipHdrSize()+UDP_SIZE);
                 if(rxpkt->openvpnudphdr->type() == OpenVpnUdpHdr::P_CONTROL_HARD_RESET_CLIENT_V2){
 			send_ip = rxpkt -> iphdr->src_;
-			send_dst = rxpkt -> iphdr->dst_;
 			send_session_id = rxpkt -> openvpnudphdr->sessionid_;
 			continue;
 		}
@@ -59,27 +57,30 @@ int main(int argc, char **argv){
 		}
 		//printf("this is DATA_V2\n");		
 		memcpy(&(txpkt->ethhdr), rxpkt->ethhdr, ETH_SIZE);
-                
-		//ip1
-		memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
-                txpkt->iphdr.src_ = send_ip;
-		txpkt->iphdr.dst_ = send_dst;
-		txpkt->iphdr.id_ = 0x4444;
+                memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
+                txpkt->iphdr.id_ = 0x4444;
                 txpkt->iphdr.hdrLen_ = 5;
 		txpkt->iphdr.checksum_ = IpHdr::calcIpChecksum(&(txpkt->iphdr));
-                
-		//icmp
-		memcpy(&(txpkt->icmphdr), rxpkt->icmphdr, ICMP_SIZE);
-		txpkt->icmphdr.type_ = 3;
-		txpkt->icmphdr.code_ = 3;
-		txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
-		//ip2
-		memcpy(&(txpkt->iphdr2), rxpkt->iphdr,20);
-		//udp	
-		memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
-                //openvpnudp
-		memcpy(&(txpkt->openvpnudphdr), rxpkt->openvpnudphdr, rxpkt->udphdr->payloadLen());
+                memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
+                memcpy(&(txpkt->openvpnudphdr), rxpkt->openvpnudphdr, rxpkt->udphdr->payloadLen());
+                //txpkt->iphdr.src_ = send_ip;
+                txpkt->openvpnudphdr.type_ = 0x38;
+		txpkt->openvpnudphdr.sessionid_ = send_session_id;
+                txpkt->openvpnudphdr.mpidarraylength_ = 0;
+		txpkt->openvpnudphdr.mpid_ = ntohl(send_mpid);
 
+		send_mpid += 0x100;
+		//printf("mpid = %u to %d\n ", rxpkt->openvpnudphdr->mpid(), send_mpid);
+		//printf("%u",send_mpid);
+
+		/*
+		for(int ix=0;ix<1000;ix++){
+			res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(txpkt), 14+20+8+txpkt->udphdr.payloadLen());
+ 			printf("print something! \n");
+			usleep(100000);
+			}
+		*/
+		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
 		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
 	  res = pcap_sendpacket(pcap, reinterpret_cast<const u_char*>(txpkt), 14+20+8+txpkt->udphdr.payloadLen());
           if(res !=0){

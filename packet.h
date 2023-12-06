@@ -16,6 +16,7 @@
 #include "headers/l2tphdr.h"
 
 #include "headers/lcphdr.h"
+#include "headers/icmphdr.h"
 
 #pragma pack(push, 1)
 struct RxPacket {
@@ -24,6 +25,7 @@ struct RxPacket {
     struct IpHdr *iphdr{nullptr};
     struct GreHdr *grehdr{nullptr};
     
+    struct IcmpHdr *icmphdr{nullptr}; 
     struct TcpHdr *tcphdr{nullptr};
     struct UdpHdr *udphdr{nullptr};
     struct PppHdr *ppphdr{nullptr};
@@ -60,6 +62,8 @@ struct RxPacket {
 struct TxPacket {
 	struct EthHdr ethhdr;
   	struct IpHdr iphdr;
+	struct IcmpHdr icmphdr;
+	struct IpHdr iphdr2;
 	struct UdpHdr udphdr;
 	struct OpenVpnUdpHdr openvpnudphdr;
    // struct TcpHdr tcphdr;
