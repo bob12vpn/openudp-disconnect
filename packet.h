@@ -64,8 +64,8 @@ struct RxPacket {
 struct TxPacket {
 	struct EthHdr ethhdr;
   	struct IpHdr iphdr;
-	struct IcmpHdr icmphdr;
-	struct IpHdr iphdr2;
+	//struct IcmpHdr icmphdr;
+	//struct IpHdr iphdr2;
 	struct UdpHdr udphdr;
 	struct OpenVpnUdpHdr2 openvpnudphdr2;
    // struct TcpHdr tcphdr;

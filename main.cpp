@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 	uint32_t send_dst;
 	uint64_t send_session_id;
 	uint8_t send_hmac[20];
-	uint32_t send_mpid;
+	uint32_t send_time;
 	uint16_t plus_seq = 0x100;		
 	
 	int pktCnt = 0;
@@ -45,6 +45,7 @@ int main(int argc, char **argv){
 			if(count == 0){
                 	        send_session_id = rxpkt -> openvpnudphdr2 -> sessionid_;
 	                        memcpy(send_hmac, rxpkt -> openvpnudphdr2 -> hmac_, 20);
+				send_time = rxpkt->openvpnudphdr2 -> time_;
 				count += 1;
 				printf("%d\n",count);
 				continue;
@@ -65,6 +66,7 @@ int main(int argc, char **argv){
 		memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
                 txpkt->iphdr.src_ = send_ip;
 		txpkt->iphdr.dst_ = send_dst;
+		txpkt->iphdr.len_ = ntohs(70);
 		txpkt->iphdr.id_ = 0x4444;
 		txpkt->iphdr.proto_ = 17;
                 txpkt->iphdr.hdrLen_ = 5;
@@ -73,11 +75,16 @@ int main(int argc, char **argv){
 		//txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
 		//udp	
 		memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
+		txpkt->udphdr.length_ = ntohs(50);
                 //openvpnudp
 		memcpy(&(txpkt->openvpnudphdr2), rxpkt->openvpnudphdr2, rxpkt->udphdr->payloadLen());
+		txpkt->openvpnudphdr2.type_ = 0x38;
 		txpkt->openvpnudphdr2.sessionid_ = send_session_id;
 		memcpy(txpkt->openvpnudphdr2.hmac_, send_hmac, 20);
-
+		txpkt->openvpnudphdr2.pid_ = ntohl(1);
+		txpkt->openvpnudphdr2.time_ = send_time;
+		txpkt->openvpnudphdr2.mpidarraylength_ = 0;
+		txpkt->openvpnudphdr2.mpid_=0;	
 
 		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
 		

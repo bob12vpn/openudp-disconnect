@@ -31,7 +31,7 @@ struct OpenVpnUdpHdr2{
                 uint8_t type_;
                 uint64_t sessionid_;
                 uint8_t hmac_[20];
-                uint8_t pid_;
+                uint32_t pid_;
                 uint32_t time_;
                 uint8_t mpidarraylength_;
                 uint32_t mpid_;
