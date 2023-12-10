@@ -32,6 +32,7 @@ struct RxPacket {
     
     struct OpenVpnTcpHdr *openvpntcphdr{nullptr};
     struct OpenVpnUdpHdr *openvpnudphdr{nullptr};
+    struct OpenVpnUdpHdr2 *openvpnudphdr2{nullptr};
     struct TlsHdr *tlshdr{nullptr};
     struct L2tpHdr *l2tphdr{nullptr};
     
@@ -66,7 +67,7 @@ struct TxPacket {
 	struct IcmpHdr icmphdr;
 	struct IpHdr iphdr2;
 	struct UdpHdr udphdr;
-	struct OpenVpnUdpHdr openvpnudphdr;
+	struct OpenVpnUdpHdr2 openvpnudphdr2;
    // struct TcpHdr tcphdr;
 
 };

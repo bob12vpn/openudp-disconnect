@@ -27,6 +27,23 @@ struct OpenVpnUdpHdr {
 		P_DATA_V2 = 0x48
 	};
 };
+struct OpenVpnUdpHdr2{
+                uint8_t type_;
+                uint64_t sessionid_;
+                uint8_t hmac_[20];
+                uint8_t pid_;
+                uint32_t time_;
+                uint8_t mpidarraylength_;
+                uint32_t mpid_;
+
+                enum : uint32_t {
+                        P_CONTROL_HARD_RESET_CLIENT_V2 = 0x38,
+                        P_CONTROL_V1 = 0x20,
+                        P_ACK_V1 = 0x28,
+                        P_DATA_V2 = 0x48
+                };
+        };
+
 #pragma pack(pop)
 
 #endif // OPENVPNUDPHDR_H_
