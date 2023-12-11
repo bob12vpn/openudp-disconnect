@@ -20,7 +20,9 @@ int main(int argc, char **argv){
 	struct RxPacket *rxpkt = new RxPacket;
 	const uint8_t* packet;
 	struct pcap_pkthdr *header;
-        uint32_t send_ip;
+        uint8_t send_eth_dst[6];
+	uint8_t send_eth_src[6];
+	uint32_t send_ip;
 	uint32_t send_dst;
 	uint64_t send_session_id;
 	uint8_t send_hmac[20];
@@ -43,7 +45,9 @@ int main(int argc, char **argv){
 
                 if(rxpkt->openvpnudphdr2->type_ == OpenVpnUdpHdr::P_CONTROL_HARD_RESET_CLIENT_V2){
 			if(count == 0){
-                	        send_session_id = rxpkt -> openvpnudphdr2 -> sessionid_;
+                	        memcpy(send_eth_dst, rxpkt -> ethhdr -> dst_, 6);
+				memcpy(send_eth_src, rxpkt -> ethhdr -> src_, 6);
+				send_session_id = rxpkt -> openvpnudphdr2 -> sessionid_;
 	                        memcpy(send_hmac, rxpkt -> openvpnudphdr2 -> hmac_, 20);
 				send_time = rxpkt->openvpnudphdr2 -> time_;
 				count += 1;
@@ -68,6 +72,7 @@ int main(int argc, char **argv){
 		txpkt->iphdr.dst_ = send_dst;
 		txpkt->iphdr.len_ = ntohs(70);
 		txpkt->iphdr.id_ = 0x4444;
+		//txpkt->iphdr.flags_ = 4;
 		txpkt->iphdr.proto_ = 17;
                 txpkt->iphdr.hdrLen_ = 5;
 		txpkt->iphdr.checksum_ = IpHdr::calcIpChecksum(&(txpkt->iphdr));
@@ -93,7 +98,6 @@ int main(int argc, char **argv){
           if(res !=0){
                   printf("%s",errbuf);
           } else {
-
 	  	printf("======%d======\n", pktCnt);
 		printf("this is DATA_V2\n");
 		//printf("mpid = %d to %d\n", rxpkt->openvpnudphdr2->mpidarraylength_, send_mpid);
