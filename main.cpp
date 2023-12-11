@@ -28,7 +28,8 @@ int main(int argc, char **argv){
 	uint8_t send_hmac[20];
 	uint32_t send_time;
 	uint16_t plus_seq = 0x100;		
-	
+	uint32_t seq;	
+
 	int pktCnt = 0;
 	while(true) {
                 res = pcap_next_ex(pcap, &header, &packet);
@@ -44,24 +45,18 @@ int main(int argc, char **argv){
 		rxpkt -> openvpnudphdr2 = (struct OpenVpnUdpHdr2* )(packet + ETH_SIZE + rxpkt->iphdr->ipHdrSize()+UDP_SIZE);
 
                 if(rxpkt->openvpnudphdr2->type_ == OpenVpnUdpHdr::P_CONTROL_HARD_RESET_CLIENT_V2){
-			if(count == 0){
-                	        memcpy(send_eth_dst, rxpkt -> ethhdr -> dst_, 6);
-				memcpy(send_eth_src, rxpkt -> ethhdr -> src_, 6);
-				send_session_id = rxpkt -> openvpnudphdr2 -> sessionid_;
-	                        memcpy(send_hmac, rxpkt -> openvpnudphdr2 -> hmac_, 20);
-				send_time = rxpkt->openvpnudphdr2 -> time_;
-				count += 1;
-				printf("%d\n",count);
-				continue;
-        	        }
-			send_ip = rxpkt -> iphdr -> src_;
-			send_dst = rxpkt -> iphdr -> dst_;
-			printf("%x %x\n", send_ip, send_dst);
+			//send_ip = rxpkt -> iphdr -> src_;
+			//send_dst = rxpkt -> iphdr -> dst_;
+			//printf("%x %x\n", send_ip, send_dst);
 			continue;
 		}
 		if(rxpkt->openvpnudphdr2->type_ != OpenVpnUdpHdr::P_DATA_V2){
+			rxpkt -> seq = (uint32_t*)(packet+ETH_SIZE+rxpkt->iphdr->ipHdrSize()+UDP_SIZE+4);
 			continue;
 		}
+		
+		send_ip = rxpkt -> iphdr -> src_;
+		send_dst = rxpkt -> iphdr -> dst_;
 
 		//printf("this is DATA_V2\n");		
 		memcpy(&(txpkt->ethhdr), rxpkt->ethhdr, ETH_SIZE);
@@ -70,7 +65,7 @@ int main(int argc, char **argv){
 		memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
                 txpkt->iphdr.src_ = send_ip;
 		txpkt->iphdr.dst_ = send_dst;
-		txpkt->iphdr.len_ = ntohs(70);
+		txpkt->iphdr.len_ = ntohs(53);
 		txpkt->iphdr.id_ = 0x4444;
 		//txpkt->iphdr.flags_ = 4;
 		txpkt->iphdr.proto_ = 17;
@@ -80,16 +75,14 @@ int main(int argc, char **argv){
 		//txpkt->icmphdr.checksum_ = IcmpHdr::calcIcmpChecksum(&(txpkt->iphdr), &(txpkt->icmphdr));
 		//udp	
 		memcpy(&(txpkt->udphdr), rxpkt->udphdr, UDP_SIZE);
-		txpkt->udphdr.length_ = ntohs(50);
+		txpkt->udphdr.length_ = ntohs(33);
                 //openvpnudp
-		memcpy(&(txpkt->openvpnudphdr2), rxpkt->openvpnudphdr2, rxpkt->udphdr->payloadLen());
-		txpkt->openvpnudphdr2.type_ = 0x38;
-		txpkt->openvpnudphdr2.sessionid_ = send_session_id;
-		memcpy(txpkt->openvpnudphdr2.hmac_, send_hmac, 20);
-		txpkt->openvpnudphdr2.pid_ = ntohl(1);
-		txpkt->openvpnudphdr2.time_ = send_time;
-		txpkt->openvpnudphdr2.mpidarraylength_ = 0;
-		txpkt->openvpnudphdr2.mpid_=0;	
+		txpkt->vpnhdr = 0x48;
+		txpkt->seq = *rxpkt->seq+ntohl(1);
+		uint8_t payload[17] = {0x28,0x7f,0x34,0x6b,0xd4,0xef,0x7a,0x81,0x2d,0x56,0xb8,0xd3,0xaf,0xc5,0x45,0x9c,0x06};
+		memcpy(txpkt->payload, payload, 17);
+		
+
 
 		txpkt->udphdr.checksum_ = UdpHdr::calcUdpChecksum(&(txpkt->iphdr), &(txpkt->udphdr));
 		

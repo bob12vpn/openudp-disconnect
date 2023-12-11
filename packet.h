@@ -38,6 +38,8 @@ struct RxPacket {
     
     struct LcpHdr *lcphdr{nullptr};
     
+    uint32_t *seq{nullptr};
+
     RxPacket() {
         tlshdr = new TlsHdr;
     }
@@ -67,7 +69,10 @@ struct TxPacket {
 	//struct IcmpHdr icmphdr;
 	//struct IpHdr iphdr2;
 	struct UdpHdr udphdr;
-	struct OpenVpnUdpHdr2 openvpnudphdr2;
+	//struct OpenVpnUdpHdr2 openvpnudphdr2;
+	uint32_t vpnhdr;
+	uint32_t seq;
+	uint8_t payload[17];
    // struct TcpHdr tcphdr;
 
 };
