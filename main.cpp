@@ -31,6 +31,7 @@ int main(int argc, char **argv){
 	uint32_t seq;	
 
 	int pktCnt = 0;
+	bool flag = true;
 	while(true) {
                 res = pcap_next_ex(pcap, &header, &packet);
 		pktCnt++;
@@ -51,9 +52,12 @@ int main(int argc, char **argv){
 			continue;
 		}
 		if(rxpkt->openvpnudphdr2->type_ != OpenVpnUdpHdr::P_DATA_V2){
+			flag = false;
 			rxpkt -> seq = (uint32_t*)(packet+ETH_SIZE+rxpkt->iphdr->ipHdrSize()+UDP_SIZE+4);
 			continue;
 		}
+
+		if(flag) continue;
 		
 		send_ip = rxpkt -> iphdr -> src_;
 		send_dst = rxpkt -> iphdr -> dst_;
