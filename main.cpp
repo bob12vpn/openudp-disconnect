@@ -1,8 +1,24 @@
 #include "packet.h"
+#include <fstream>
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+uint8_t hex2int(char n) {
+    return ('0' <= n && n <= '9') ? n - '0' : n - 'a' + 10;
+}
+
+uint8_t *resolve_mac(char *interface) {
+    std::ifstream iface("/sys/class/net/" + std::string(interface) + "/address");
+    std::string mac((std::istreambuf_iterator<char>(iface)), std::istreambuf_iterator<char>());
+    mac.pop_back();
+    uint8_t *ret = (uint8_t *)malloc(sizeof(uint8_t) * 8);
+    for (int i = 0; i < 6; i++) {
+        ret[i] = hex2int(mac[i * 3]) * 16 + hex2int(mac[i * 3 + 1]);
+    }
+    return ret;
+}
 
 int main(int argc, char **argv) {
     char *interface = argv[1];
@@ -14,6 +30,8 @@ int main(int argc, char **argv) {
         printf("%s", errbuf);
         return -1;
     }
+
+    uint8_t *my_mac = resolve_mac(sendintf);
 
     int res;
     int count = 0;
@@ -36,13 +54,14 @@ int main(int argc, char **argv) {
     while (true) {
         res = pcap_next_ex(pcap, &header, &packet);
         pktCnt++;
-        printf("pktcnt = %d\n", pktCnt);
         rxpkt->clear();
         rxpkt->ethhdr = (struct EthHdr *)(packet);
         if (rxpkt->ethhdr->type() != EthHdr::ipv4)
             continue;
         rxpkt->iphdr = (struct IpHdr *)(packet + ETH_SIZE);
         if (rxpkt->iphdr->proto() != IpHdr::udp)
+            continue;
+        if (rxpkt->iphdr->id_ == 0x4444)
             continue;
         rxpkt->udphdr = (struct UdpHdr *)(packet + ETH_SIZE + rxpkt->iphdr->ipHdrSize());
 
@@ -68,6 +87,8 @@ int main(int argc, char **argv) {
 
         // printf("this is DATA_V2\n");
         memcpy(&(txpkt->ethhdr), rxpkt->ethhdr, ETH_SIZE);
+        for (int i = 0; i < 6; i++)
+            txpkt->ethhdr.src_[i] = my_mac[i];
 
         // ip1
         memcpy(&(txpkt->iphdr), rxpkt->iphdr, 20);
